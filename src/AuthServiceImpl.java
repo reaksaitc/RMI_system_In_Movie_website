@@ -27,10 +27,10 @@ public class AuthServiceImpl extends UnicastRemoteObject implements AuthService 
     @Override
     public String register(String username, String password) throws RemoteException {
         if (users.containsKey(username)) {
-            return "❌ Username already exists!";
+            return "Username already exists!";
         }
         users.put(username, password);
-        return "✅ Registration successful!";
+        return "Registration successful!";
     }
 
     @Override
@@ -38,11 +38,11 @@ public class AuthServiceImpl extends UnicastRemoteObject implements AuthService 
         try {
             String decrypted = decrypt(password);
             if (users.containsKey(username) && users.get(username).equals(decrypted)) {
-                return "✅ Login successful! Welcome " + username;
+                return "Login successful! Welcome " + username;
             }
-            return "❌ Invalid username or password!";
+            return "Invalid username or password!";
         } catch (Exception e) {
-            return "❌ Authentication error: " + e.getMessage();
+            return "Authentication error: " + e.getMessage();
         }
     }
 }

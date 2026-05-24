@@ -29,7 +29,7 @@ public class Client {
             boolean isLoggedIn = false;
             String currentUser = "";
 
-            System.out.println("🎬 Welcome to Movie RMI System!");
+            System.out.println(" Welcome to Movie RMI System!");
             System.out.println("================================");
 
             while (true) {
@@ -57,18 +57,18 @@ public class Client {
                         String encryptedPassword = encrypt(password);
                         String result = authService.login(username, encryptedPassword);
                         System.out.println(result);
-                        if (result.contains("✅")) {
+                        if (result.contains("Login successful")) {
                             isLoggedIn = true;
                             currentUser = username;
                         }
 
                     } else if (choice == 3) {
-                        System.out.println("👋 Goodbye!");
+                        System.out.println("Goodbye!");
                         break;
                     }
 
                 } else {
-                    System.out.println("\n🎬 Welcome " + currentUser + "!");
+                    System.out.println("\n Welcome " + currentUser + "!");
                     System.out.println("1. Get All Movies");
                     System.out.println("2. Search Movie");
                     System.out.println("3. Get Movie Details");
@@ -79,7 +79,7 @@ public class Client {
 
                     if (choice == 1) {
                         List<String> movies = movieService.getAllMovies();
-                        System.out.println("\n🎬 All Movies:");
+                        System.out.println("\nAll Movies:");
                         for (String movie : movies) {
                             System.out.println("  - " + movie);
                         }
@@ -97,13 +97,13 @@ public class Client {
                     } else if (choice == 4) {
                         isLoggedIn = false;
                         currentUser = "";
-                        System.out.println("✅ Logged out successfully!");
+                        System.out.println("Logged out successfully!");
                     }
                 }
             }
 
         } catch (Exception e) {
-            System.out.println("❌ Client error: " + e.getMessage());
+            System.out.println(" Client error: " + e.getMessage());
             e.printStackTrace();
         }
     }

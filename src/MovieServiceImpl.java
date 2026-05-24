@@ -28,19 +28,19 @@ public class MovieServiceImpl extends UnicastRemoteObject implements MovieServic
     public String searchMovie(String title) throws RemoteException {
         for (String key : movies.keySet()) {
             if (key.toLowerCase().contains(title.toLowerCase())) {
-                return "🎬 Found: " + key;
+                return "Found: " + key;
             }
         }
-        return "❌ Movie not found!";
+        return "Movie not found!";
     }
 
     @Override
     public String getMovieDetails(String title) throws RemoteException {
         for (String key : movies.keySet()) {
             if (key.toLowerCase().contains(title.toLowerCase())) {
-                return "🎬 " + key + "\n📋 " + movies.get(key);
+                return key + "\n" + movies.get(key);
             }
         }
-        return "❌ Movie not found!";
+        return "Movie not found!";
     }
 }
