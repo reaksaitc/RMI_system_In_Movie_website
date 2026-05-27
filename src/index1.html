@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CINEMATHEK — A Movie Catalogue</title>
+<meta name="description" content="A curated catalogue of essential cinema. Browse, search, and discover ten films across drama, crime, action, and science fiction." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;0,6..96,700;0,6..96,900;1,6..96,400;1,6..96,700&family=Archivo:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg:        #0e0d0c;
+    --bg-2:      #161412;
+    --bg-card:   #1a1816;
+    --ink:       #f3ead8;
+    --ink-soft:  rgba(243, 234, 216, 0.72);
+    --ink-mute:  rgba(243, 234, 216, 0.45);
+    --ink-faint: rgba(243, 234, 216, 0.18);
+    --rule:      rgba(243, 234, 216, 0.12);
+    --red:       #d33848;          /* cinema curtain red */
+    --red-2:     #a02838;
+    --gold:      #d4a574;
+    --crime:     #8b1e2c;
+    --drama:     #b8662a;
+    --action:    #2c3e50;
+    --scifi:     #1d4a6e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink-soft);
+    font-family: 'Archivo', system-ui, sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  /* film grain overlay */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    pointer-events: none; z-index: 100;
+    opacity: 0.07;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+  /* vignette */
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    pointer-events: none; z-index: 99;
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.55) 100%);
+  }
+
+  ::selection { background: var(--red); color: var(--ink); }
+
+  /* ─────────── typography ─────────── */
+  .display, h1, h2, h3 {
+    font-family: 'Bodoni Moda', 'Didot', serif;
+    color: var(--ink);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+    font-optical-sizing: auto;
+  }
+  .display.italic, .italic { font-style: italic; }
+  .mono { font-family: 'Space Mono', monospace; }
+  .label {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--ink-mute);
+  }
+
+  a { color: var(--ink); text-decoration: none; transition: color .2s; }
+  a:hover { color: var(--red); }
+
+  .wrap { max-width: 1440px; margin: 0 auto; padding: 0 56px; }
+  @media (max-width: 768px) { .wrap { padding: 0 24px; } }
+
+  /* ─────────── header ─────────── */
+  header {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(14, 13, 12, 0.82);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border-bottom: 1px solid var(--rule);
+  }
+  .header-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 22px 0;
+  }
+  .logo {
+    font-family: 'Bodoni Moda', serif;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+  }
+  .logo .star { color: var(--red); }
+  .nav-links {
+    display: flex; gap: 36px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+  }
+  .nav-links a { color: var(--ink-soft); }
+  .nav-links a.active { color: var(--red); }
+  .header-cta {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    padding: 10px 18px; border: 1px solid var(--ink); color: var(--ink);
+    background: transparent; cursor: pointer; transition: all .2s;
+  }
+  .header-cta:hover { background: var(--ink); color: var(--bg); }
+  @media (max-width: 900px) { .nav-links { display: none; } }
+
+  /* ─────────── hero ─────────── */
+  .hero {
+    padding: 100px 0 80px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-top {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 56px; padding-bottom: 24px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .hero-top .meta { display: flex; gap: 56px; }
+  .hero-top .meta .item .label { display: block; margin-bottom: 4px; }
+  .hero-top .meta .item .val { font-family: 'Bodoni Moda', serif;
+    font-size: 18px; color: var(--ink); }
+  @media (max-width: 700px) {
+    .hero-top { flex-direction: column; gap: 16px; align-items: flex-start; }
+    .hero-top .meta { gap: 32px; }
+    .hero { padding: 56px 0 56px; }
+  }
+
+  .hero h1 {
+    font-size: clamp(64px, 13vw, 220px);
+    line-height: 0.86;
+    margin-bottom: 40px;
+  }
+  .hero h1 .em { color: var(--red); font-style: italic; }
+  .hero h1 .out {
+    -webkit-text-stroke: 1.5px var(--ink);
+    color: transparent;
+  }
+
+  .hero-bottom {
+    display: grid; grid-template-columns: 1fr 380px;
+    gap: 56px; align-items: end;
+  }
+  @media (max-width: 900px) { .hero-bottom { grid-template-columns: 1fr; } }
+  .hero-tag {
+    max-width: 680px;
+    font-size: 19px; line-height: 1.55;
+    color: var(--ink-soft);
+  }
+  .hero-tag em { color: var(--ink); font-style: italic;
+    font-family: 'Bodoni Moda', serif; }
+
+  .now-showing {
+    border: 1px solid var(--rule);
+    padding: 24px;
+    background: var(--bg-2);
+  }
+  .now-showing .label { display: block; margin-bottom: 12px; }
+  .now-showing .ttl {
+    font-family: 'Bodoni Moda', serif;
+    font-size: 26px; line-height: 1.05; color: var(--ink);
+    margin-bottom: 16px;
+  }
+  .now-showing .row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 16px; border-top: 1px solid var(--rule);
+    font-family: 'Space Mono', monospace; font-size: 11px;
+    color: var(--ink-mute); letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .now-showing .row .rating { color: var(--red); font-size: 14px; }
+
+  /* ─────────── controls (search + filter) ─────────── */
+  .controls {
+    padding: 32px 0 24px;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    position: sticky; top: 73px; z-index: 40;
+    background: rgba(14, 13, 12, 0.92);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+  .controls-row {
+    display: flex; align-items: center; gap: 32px; flex-wrap: wrap;
+  }
+  .search-wrap {
+    flex: 1; min-width: 280px; position: relative;
+  }
+  .search-wrap input {
+    width: 100%; background: transparent;
+    border: none; border-bottom: 1px solid var(--ink-faint);
+    padding: 14px 0 14px 36px;
+    font-family: 'Bodoni Moda', serif;
+    font-size: 26px; font-style: italic;
+    color: var(--ink); outline: none;
+    transition: border-color .2s;
+  }
+  .search-wrap input::placeholder { color: var(--ink-mute); }
+  .search-wrap input:focus { border-bottom-color: var(--red); }
+  .search-wrap .icn {
+    position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+    color: var(--ink-mute);
+  }
+
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip {
+    font-family: 'Space Mono', monospace; font-size: 11px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 10px 18px;
+    border: 1px solid var(--ink-faint);
+    background: transparent; color: var(--ink-soft);
+    cursor: pointer; transition: all .2s;
+  }
+  .chip:hover { border-color: var(--ink); color: var(--ink); }
+  .chip.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+  .results-line {
+    font-family: 'Space Mono', monospace; font-size: 11px;
+    color: var(--ink-mute); letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 18px 0;
+  }
+  .results-line .count { color: var(--red); }
+
+  /* ─────────── catalogue ─────────── */
+  .catalogue {
+    padding: 8px 0 120px;
+  }
+  .grid {
+    display: grid; gap: 56px 32px;
+    grid-template-columns: repeat(4, 1fr);
+  }
+  @media (max-width: 1200px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 900px)  { .grid { grid-template-columns: repeat(2, 1fr); gap: 40px 20px; } }
+  @media (max-width: 540px)  { .grid { grid-template-columns: 1fr; } }
+
+  .card {
+    cursor: pointer;
+    position: relative;
+    transition: transform .35s cubic-bezier(.16,.84,.44,1);
+    opacity: 0; transform: translateY(30px);
+    animation: cardin .8s cubic-bezier(.16,.84,.44,1) forwards;
+  }
+  @keyframes cardin { to { opacity: 1; transform: translateY(0); } }
+  .card.hidden { display: none; }
+  .card:hover { transform: translateY(-6px); }
+
+  .poster {
+    position: relative;
+    aspect-ratio: 2 / 3;
+    overflow: hidden;
+    border: 1px solid var(--ink-faint);
+    margin-bottom: 14px;
+    background: var(--bg-card);
+    transition: border-color .25s;
+  }
+  .card:hover .poster { border-color: var(--ink); }
+
+  .poster .art {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; justify-content: space-between;
+    padding: 24px;
+    transition: transform .8s cubic-bezier(.16,.84,.44,1);
+  }
+  .card:hover .poster .art { transform: scale(1.04); }
+
+  .poster .corner {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px; letter-spacing: 0.16em;
+    color: rgba(243, 234, 216, 0.7);
+    display: flex; justify-content: space-between;
+  }
+  .poster .ttl {
+    font-family: 'Bodoni Moda', serif;
+    color: #fff8e8;
+    line-height: 0.92;
+    letter-spacing: -0.01em;
+    font-weight: 500;
+  }
+  .poster .ttl.size-l { font-size: 32px; }
+  .poster .ttl.size-m { font-size: 26px; }
+  .poster .ttl.size-s { font-size: 22px; }
+
+  .poster .footnote {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px; letter-spacing: 0.16em;
+    color: rgba(243, 234, 216, 0.55);
+    text-transform: uppercase;
+    display: flex; justify-content: space-between; align-items: end;
+  }
+  .poster .footnote .rating {
+    font-family: 'Bodoni Moda', serif;
+    font-size: 22px; font-style: italic;
+    letter-spacing: -0.01em;
+    color: rgba(255, 248, 232, 0.9);
+  }
+
+  /* genre-specific poster backgrounds (each unique) */
+  .poster.drama   { background: radial-gradient(circle at 30% 20%, #c97a3b 0%, #6a3411 60%, #2a1408 100%); }
+  .poster.crime   { background: linear-gradient(165deg, #1a0608 0%, #4a0a13 50%, #8b1e2c 100%); }
+  .poster.action  { background: linear-gradient(180deg, #1f2530 0%, #0a0d12 100%); }
+  .poster.scifi   { background: radial-gradient(circle at 70% 30%, #2c6791 0%, #0e2d4a 60%, #050d1a 100%); }
+
+  /* decorative shapes per poster (alternate variations) */
+  .poster .deco { position: absolute; pointer-events: none; }
+  .deco-rings { right: -40%; bottom: -40%; width: 180%; height: 180%;
+    border: 1px solid rgba(255,255,255,0.08); border-radius: 50%; }
+  .deco-rings::before { content: ''; position: absolute; inset: 12%; border: 1px solid rgba(255,255,255,0.06); border-radius: 50%; }
+  .deco-rings::after  { content: ''; position: absolute; inset: 26%; border: 1px solid rgba(255,255,255,0.04); border-radius: 50%; }
+  .deco-halftone {
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1.5px);
+    background-size: 12px 12px;
+    mask-image: linear-gradient(180deg, transparent 30%, black 100%);
+  }
+  .deco-lines {
+    inset: 0;
+    background-image: repeating-linear-gradient(0deg, transparent 0, transparent 28px, rgba(255,255,255,0.05) 28px, rgba(255,255,255,0.05) 29px);
+  }
+  .deco-glow {
+    width: 80%; height: 80%; left: -20%; top: -20%;
+    background: radial-gradient(circle, rgba(255,200,140,0.18) 0%, transparent 60%);
+  }
+
+  .card-meta {
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .card-meta .title {
+    font-family: 'Bodoni Moda', serif;
+    font-size: 18px; color: var(--ink); line-height: 1.15;
+    font-weight: 500;
+  }
+  .card-meta .year {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px; color: var(--ink-mute);
+    letter-spacing: 0.1em;
+  }
+  .card-director {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px; color: var(--ink-mute);
+    letter-spacing: 0.08em; text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  /* ─────────── modal ─────────── */
+  .modal-backdrop {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0, 0, 0, 0.78);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: none;
+    opacity: 0; transition: opacity .4s;
+  }
+  .modal-backdrop.open { display: flex; align-items: center; justify-content: center; padding: 32px; }
+  .modal-backdrop.in { opacity: 1; }
+  @media (max-width: 700px) { .modal-backdrop.open { padding: 0; align-items: flex-end; } }
+
+  .modal {
+    background: var(--bg-2);
+    width: 100%; max-width: 1100px;
+    max-height: calc(100vh - 64px);
+    border: 1px solid var(--rule);
+    overflow: auto;
+    position: relative;
+    transform: translateY(40px) scale(0.98);
+    transition: transform .5s cubic-bezier(.16,.84,.44,1);
+  }
+  .modal-backdrop.in .modal { transform: translateY(0) scale(1); }
+  @media (max-width: 700px) { .modal { max-height: 92vh; } }
+
+  .modal-close {
+    position: absolute; top: 20px; right: 20px; z-index: 5;
+    width: 40px; height: 40px;
+    border: 1px solid var(--rule);
+    background: rgba(14,13,12,0.6);
+    color: var(--ink); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; transition: all .2s;
+  }
+  .modal-close:hover { background: var(--red); border-color: var(--red); }
+
+  .modal-body { display: grid; grid-template-columns: 380px 1fr; gap: 0; }
+  @media (max-width: 800px) { .modal-body { grid-template-columns: 1fr; } }
+
+  .modal-poster {
+    aspect-ratio: 2/3;
+    position: relative; overflow: hidden;
+    border-right: 1px solid var(--rule);
+  }
+  .modal-poster .art {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; justify-content: space-between;
+    padding: 32px;
+  }
+  .modal-poster .ttl { font-family: 'Bodoni Moda', serif; color: #fff8e8;
+    line-height: 0.92; font-size: 40px; font-weight: 500; }
+  @media (max-width: 800px) { .modal-poster { aspect-ratio: 16/10; } }
+
+  .modal-content { padding: 56px 48px; }
+  @media (max-width: 800px) { .modal-content { padding: 32px 24px; } }
+
+  .modal-content .label { display: block; margin-bottom: 12px; }
+  .modal-content h2 {
+    font-size: clamp(40px, 5vw, 64px);
+    margin-bottom: 24px; line-height: 0.96;
+  }
+  .modal-content h2 .em { font-style: italic; color: var(--red); }
+
+  .modal-info {
+    display: flex; flex-wrap: wrap; gap: 8px 32px;
+    padding-bottom: 24px; margin-bottom: 32px;
+    border-bottom: 1px solid var(--rule);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px; color: var(--ink-mute);
+    letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .modal-info .pipe { color: var(--ink-faint); }
+  .modal-info .star { color: var(--red); }
+
+  .modal-desc {
+    font-family: 'Bodoni Moda', serif;
+    font-size: 26px; line-height: 1.4;
+    color: var(--ink); font-style: italic; font-weight: 400;
+    margin-bottom: 40px;
+    max-width: 620px;
+  }
+  .modal-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 32px; padding-top: 32px; border-top: 1px solid var(--rule);
+  }
+  @media (max-width: 600px) { .modal-grid { grid-template-columns: 1fr 1fr; gap: 20px; } }
+  .modal-grid .item .label { margin-bottom: 6px; }
+  .modal-grid .item .val { font-family: 'Bodoni Moda', serif;
+    font-size: 22px; color: var(--ink); }
+  .modal-grid .item.full { grid-column: 1 / -1; }
+  .modal-grid .item.full .val { font-size: 16px; font-family: 'Archivo', sans-serif;
+    color: var(--ink-soft); font-style: normal; line-height: 1.6; }
+
+  .modal-actions {
+    margin-top: 40px; display: flex; gap: 12px; flex-wrap: wrap;
+  }
+  .btn-primary, .btn-ghost {
+    font-family: 'Space Mono', monospace; font-size: 12px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 14px 22px; cursor: pointer; transition: all .2s;
+    display: inline-flex; align-items: center; gap: 10px;
+    border: 1px solid var(--ink);
+  }
+  .btn-primary { background: var(--red); color: var(--ink); border-color: var(--red); }
+  .btn-primary:hover { background: var(--red-2); border-color: var(--red-2); }
+  .btn-ghost { background: transparent; color: var(--ink); }
+  .btn-ghost:hover { background: var(--ink); color: var(--bg); }
+
+  /* ─────────── empty state ─────────── */
+  .empty {
+    grid-column: 1 / -1;
+    text-align: center; padding: 80px 0;
+    border: 1px dashed var(--rule);
+  }
+  .empty h3 { font-size: 40px; margin-bottom: 12px; }
+  .empty h3 .em { font-style: italic; color: var(--red); }
+  .empty p { color: var(--ink-mute); font-family: 'Space Mono', monospace;
+    font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; }
+
+  /* ─────────── footer ─────────── */
+  footer {
+    border-top: 1px solid var(--rule);
+    padding: 80px 0 40px;
+    background: var(--bg-2);
+  }
+  .footer-grid {
+    display: grid; grid-template-columns: 2fr 1fr 1fr;
+    gap: 56px; margin-bottom: 64px;
+  }
+  @media (max-width: 800px) { .footer-grid { grid-template-columns: 1fr; gap: 40px; } }
+  footer h3 { font-size: 56px; line-height: 1; margin-bottom: 16px; }
+  footer h3 .em { color: var(--red); font-style: italic; }
+  footer .tag { max-width: 360px; }
+  footer .col .label { display: block; margin-bottom: 16px; }
+  footer .col ul { list-style: none; }
+  footer .col ul li { margin-bottom: 8px; font-family: 'Bodoni Moda', serif;
+    font-size: 16px; color: var(--ink-soft); }
+
+  .footer-bottom {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 24px; border-top: 1px solid var(--rule);
+    font-family: 'Space Mono', monospace; font-size: 11px;
+    color: var(--ink-mute); letter-spacing: 0.12em; text-transform: uppercase;
+  }
+  @media (max-width: 700px) { .footer-bottom { flex-direction: column; gap: 12px; align-items: flex-start; } }
+  .footer-bottom .red { color: var(--red); }
+
+  /* ─────────── auth modal (visual) ─────────── */
+  .auth-modal { max-width: 460px; }
+  .auth-modal .modal-body { grid-template-columns: 1fr; }
+  .auth-modal .modal-content { padding: 48px 40px; }
+  .auth-modal h2 { font-size: 48px; margin-bottom: 24px; }
+  .auth-tabs {
+    display: flex; gap: 24px; margin-bottom: 32px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .auth-tab {
+    font-family: 'Space Mono', monospace; font-size: 12px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 12px 0; background: transparent; border: none;
+    color: var(--ink-mute); cursor: pointer; border-bottom: 1px solid transparent;
+    margin-bottom: -1px;
+  }
+  .auth-tab.active { color: var(--ink); border-bottom-color: var(--red); }
+  .field { display: block; margin-bottom: 24px; }
+  .field .label { display: block; margin-bottom: 8px; }
+  .field input {
+    width: 100%; background: transparent;
+    border: none; border-bottom: 1px solid var(--ink-faint);
+    padding: 10px 0; color: var(--ink);
+    font-family: 'Bodoni Moda', serif; font-size: 22px;
+    outline: none; transition: border-color .2s;
+  }
+  .field input:focus { border-bottom-color: var(--red); }
+  .auth-submit {
+    width: 100%; margin-top: 12px;
+    padding: 16px;
+    background: var(--red); color: var(--ink); border: none;
+    font-family: 'Space Mono', monospace; font-size: 12px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    cursor: pointer; transition: background .2s;
+  }
+  .auth-submit:hover { background: var(--red-2); }
+  .auth-hint {
+    margin-top: 20px; font-family: 'Space Mono', monospace;
+    font-size: 11px; color: var(--ink-mute); letter-spacing: 0.08em;
+    line-height: 1.6;
+  }
+  .auth-hint .accent { color: var(--gold); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap header-row">
+    <div class="logo">CINE<span class="star">★</span>MATHEK</div>
+    <nav class="nav-links">
+      <a href="#catalogue" class="active">Catalogue</a>
+      <a href="#" onclick="filterGenre('all'); return false;">All</a>
+      <a href="#" onclick="filterGenre('Sci-Fi'); return false;">Sci-Fi</a>
+      <a href="#" onclick="filterGenre('Drama'); return false;">Drama</a>
+      <a href="#" onclick="filterGenre('Crime'); return false;">Crime</a>
+    </nav>
+    <button class="header-cta" onclick="openAuth()">Sign In</button>
+  </div>
+</header>
+
+<!-- ═══════════════ HERO ═══════════════ -->
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-top">
+      <div class="meta">
+        <div class="item">
+          <span class="label">Volume</span>
+          <span class="val">№ 01</span>
+        </div>
+        <div class="item">
+          <span class="label">Catalogue</span>
+          <span class="val mono">10 films</span>
+        </div>
+        <div class="item">
+          <span class="label">Last updated</span>
+          <span class="val mono">May 2026</span>
+        </div>
+      </div>
+      <span class="label">A curated archive</span>
+    </div>
+
+    <h1>
+      A study<br>
+      of <span class="em italic">cinema</span><span class="out">.</span>
+    </h1>
+
+    <div class="hero-bottom">
+      <p class="hero-tag">
+        Ten films, four genres, half a century of moving image. From a small
+        Italian crime family in 1972 to a hacker realising the world isn't
+        real in 1999 — a working catalogue of films <em>worth your time</em>,
+        rendered in print-quality typography for browsing in the dark.
+      </p>
+      <div class="now-showing">
+        <span class="label">Editor's pick</span>
+        <div class="ttl">The Godfather <span class="italic" style="color:var(--ink-mute)">(1972)</span></div>
+        <div class="row">
+          <span>F. F. Coppola · Crime</span>
+          <span class="rating">★ 9.2</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ CONTROLS ═══════════════ -->
+<section class="controls" id="catalogue">
+  <div class="wrap">
+    <div class="controls-row">
+      <div class="search-wrap">
+        <svg class="icn" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
+        </svg>
+        <input id="search" type="text" placeholder="Search the catalogue…" autocomplete="off"/>
+      </div>
+      <div class="chips" id="chips">
+        <button class="chip active" data-genre="all">All</button>
+        <button class="chip" data-genre="Sci-Fi">Sci-Fi</button>
+        <button class="chip" data-genre="Drama">Drama</button>
+        <button class="chip" data-genre="Crime">Crime</button>
+        <button class="chip" data-genre="Action">Action</button>
+      </div>
+    </div>
+    <div class="results-line">
+      <span id="result-count" class="count">10</span> &nbsp;films · sorted by year, descending
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ CATALOGUE GRID ═══════════════ -->
+<section class="catalogue">
+  <div class="wrap">
+    <div id="grid" class="grid"></div>
+  </div>
+</section>
+
+<!-- ═══════════════ DETAIL MODAL ═══════════════ -->
+<div class="modal-backdrop" id="modal" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeModal()" aria-label="Close">✕</button>
+    <div class="modal-body">
+      <div class="modal-poster" id="modal-poster"></div>
+      <div class="modal-content">
+        <span class="label">№ <span id="m-num">--</span> · From the archive</span>
+        <h2 id="m-title">—</h2>
+        <div class="modal-info">
+          <span id="m-year">—</span>
+          <span class="pipe">/</span>
+          <span id="m-genre">—</span>
+          <span class="pipe">/</span>
+          <span id="m-director">—</span>
+          <span class="pipe">/</span>
+          <span class="star">★ <span id="m-rating">—</span></span>
+        </div>
+        <p class="modal-desc" id="m-desc">—</p>
+
+        <div class="modal-grid">
+          <div class="item">
+            <span class="label">Year</span>
+            <span class="val" id="m-year-2">—</span>
+          </div>
+          <div class="item">
+            <span class="label">Director</span>
+            <span class="val" id="m-director-2">—</span>
+          </div>
+          <div class="item">
+            <span class="label">Rating</span>
+            <span class="val" id="m-rating-2">—</span>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-primary">▶ &nbsp;Watch trailer</button>
+          <button class="btn-ghost" onclick="addFavourite(this)">+ Add to list</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ AUTH MODAL ═══════════════ -->
+<div class="modal-backdrop" id="auth" onclick="closeAuth(event)">
+  <div class="modal auth-modal" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeAuth()" aria-label="Close">✕</button>
+    <div class="modal-body">
+      <div class="modal-content">
+        <span class="label">Account</span>
+        <h2>Sign <span class="em">in</span>.</h2>
+        <div class="auth-tabs">
+          <button class="auth-tab active" data-tab="login">Login</button>
+          <button class="auth-tab" data-tab="register">Register</button>
+        </div>
+        <div class="field">
+          <span class="label">Username</span>
+          <input type="text" id="auth-user" autocomplete="username"/>
+        </div>
+        <div class="field">
+          <span class="label">Password</span>
+          <input type="password" id="auth-pass" autocomplete="current-password"/>
+        </div>
+        <button class="auth-submit" id="auth-submit" onclick="submitAuth()">Continue</button>
+        <p class="auth-hint">
+          Try <span class="accent">admin / admin123</span> — the default account
+          from the Movie RMI backend. Authentication is hashed with SHA-256
+          server-side.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ FOOTER ═══════════════ -->
+<footer>
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <h3>Cine<span class="em italic">mathek.</span></h3>
+        <p class="tag">A small catalogue of essential cinema. Backed by a Java RMI service for the curious about distributed systems.</p>
+      </div>
+      <div class="col">
+        <span class="label">Browse</span>
+        <ul>
+          <li>By year</li>
+          <li>By director</li>
+          <li>By rating</li>
+          <li>By genre</li>
+        </ul>
+      </div>
+      <div class="col">
+        <span class="label">About</span>
+        <ul>
+          <li>The catalogue</li>
+          <li>The backend</li>
+          <li>Source code</li>
+          <li>Contact</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>Set in Bodoni Moda · Archivo · Space Mono</span>
+      <span><span class="red">●</span> &nbsp;Service operational</span>
+      <span>MMXXVI</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ─────────────────────────────────────────────
+  // catalogue data (matches the Java RMI backend)
+  // ─────────────────────────────────────────────
+  const MOVIES = [
+    { title: "Interstellar", director: "Christopher Nolan", year: 2014, genre: "Sci-Fi", rating: 8.6,
+      desc: "A team of explorers travel through a wormhole in space in search of a new home for humanity." },
+    { title: "Inception", director: "Christopher Nolan", year: 2010, genre: "Sci-Fi", rating: 8.8,
+      desc: "A thief who steals corporate secrets through dream-sharing technology is given the inverse task of planting an idea." },
+    { title: "The Dark Knight", director: "Christopher Nolan", year: 2008, genre: "Action", rating: 9.0,
+      desc: "Batman faces the Joker, a criminal mastermind who plunges Gotham City into anarchy and tests the hero's moral limits." },
+    { title: "The Matrix", director: "The Wachowskis", year: 1999, genre: "Sci-Fi", rating: 8.7,
+      desc: "A computer hacker learns the disturbing truth about his reality and his role in the war against its controllers." },
+    { title: "Pulp Fiction", director: "Quentin Tarantino", year: 1994, genre: "Crime", rating: 8.9,
+      desc: "The lives of two mob hitmen, a boxer, a gangster and his wife, and a pair of bandits intertwine in four tales of violence." },
+    { title: "Forrest Gump", director: "Robert Zemeckis", year: 1994, genre: "Drama", rating: 8.8,
+      desc: "Decades of American history seen through the eyes of an Alabama man with an IQ of 75 but a remarkable destiny." },
+    { title: "The Shawshank Redemption", director: "Frank Darabont", year: 1994, genre: "Drama", rating: 9.3,
+      desc: "Two imprisoned men bond over a number of years, finding solace and eventual redemption through acts of common decency." },
+    { title: "Star Wars: The Empire Strikes Back", director: "Irvin Kershner", year: 1980, genre: "Sci-Fi", rating: 8.7,
+      desc: "After the Rebels are brutally overpowered by the Empire, Luke Skywalker begins Jedi training with Yoda." },
+    { title: "Star Wars: A New Hope", director: "George Lucas", year: 1977, genre: "Sci-Fi", rating: 8.6,
+      desc: "Luke Skywalker joins forces with a Jedi Knight, a cocky pilot, a Wookiee and two droids to save the galaxy." },
+    { title: "The Godfather", director: "Francis Ford Coppola", year: 1972, genre: "Crime", rating: 9.2,
+      desc: "The aging patriarch of an organised crime dynasty in postwar New York transfers control of his clandestine empire to his reluctant son." }
+  ];
+
+  const GENRE_CLASS = {
+    'Sci-Fi': 'scifi',
+    'Drama' : 'drama',
+    'Crime' : 'crime',
+    'Action': 'action'
+  };
+
+  // deco variations cycle so each poster feels unique
+  const DECO = ['deco-rings', 'deco-halftone', 'deco-lines', 'deco-glow'];
+
+  // pick a font size class based on title length
+  function titleSize(t) {
+    if (t.length <= 12) return 'size-l';
+    if (t.length <= 22) return 'size-m';
+    return 'size-s';
+  }
+
+  // ─────────────────────────────────────────────
+  // render
+  // ─────────────────────────────────────────────
+  function renderGrid(list) {
+    const grid = document.getElementById('grid');
+    if (!list.length) {
+      grid.innerHTML = `<div class="empty">
+        <h3>No films <span class="em">found.</span></h3>
+        <p>Try a different title or clear the filter.</p>
+      </div>`;
+      document.getElementById('result-count').textContent = '0';
+      return;
+    }
+
+    grid.innerHTML = list.map((m, i) => {
+      const cls = GENRE_CLASS[m.genre] || 'drama';
+      const deco = DECO[i % DECO.length];
+      return `
+      <div class="card" data-index="${MOVIES.indexOf(m)}" style="animation-delay:${i * 70}ms"
+           onclick="openModal(${MOVIES.indexOf(m)})">
+        <div class="poster ${cls}">
+          <div class="deco ${deco}"></div>
+          <div class="art">
+            <div class="corner">
+              <span>№ ${String(MOVIES.indexOf(m) + 1).padStart(2,'0')}</span>
+              <span>${m.year}</span>
+            </div>
+            <div>
+              <div class="ttl ${titleSize(m.title)}">${m.title}</div>
+            </div>
+            <div class="footnote">
+              <span>${m.genre.toUpperCase()}</span>
+              <span class="rating">★ ${m.rating.toFixed(1)}</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-meta">
+          <span class="title">${m.title}</span>
+          <span class="year">${m.year}</span>
+        </div>
+        <div class="card-director">${m.director}</div>
+      </div>`;
+    }).join('');
+    document.getElementById('result-count').textContent = list.length;
+  }
+
+  // ─────────────────────────────────────────────
+  // filter & search
+  // ─────────────────────────────────────────────
+  let activeGenre = 'all';
+  let query = '';
+
+  function applyFilters() {
+    let list = [...MOVIES];
+    if (activeGenre !== 'all') list = list.filter(m => m.genre === activeGenre);
+    if (query.trim()) {
+      const q = query.trim().toLowerCase();
+      list = list.filter(m =>
+        m.title.toLowerCase().includes(q) ||
+        m.director.toLowerCase().includes(q) ||
+        m.genre.toLowerCase().includes(q)
+      );
+    }
+    renderGrid(list);
+  }
+
+  function filterGenre(g) {
+    activeGenre = g;
+    document.querySelectorAll('.chip').forEach(c => {
+      c.classList.toggle('active', c.dataset.genre === g);
+    });
+    applyFilters();
+    document.getElementById('catalogue').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  document.querySelectorAll('.chip').forEach(c => {
+    c.addEventListener('click', () => filterGenre(c.dataset.genre));
+  });
+
+  document.getElementById('search').addEventListener('input', (e) => {
+    query = e.target.value;
+    applyFilters();
+  });
+
+  // ─────────────────────────────────────────────
+  // detail modal
+  // ─────────────────────────────────────────────
+  function openModal(idx) {
+    const m = MOVIES[idx];
+    if (!m) return;
+    const cls = GENRE_CLASS[m.genre] || 'drama';
+    const deco = DECO[idx % DECO.length];
+
+    document.getElementById('m-num').textContent = String(idx + 1).padStart(2, '0');
+    document.getElementById('m-title').innerHTML = m.title.replace(/(\w+)$/, '<span class="em italic">$1</span>');
+    document.getElementById('m-year').textContent = m.year;
+    document.getElementById('m-genre').textContent = m.genre;
+    document.getElementById('m-director').textContent = m.director;
+    document.getElementById('m-rating').textContent = m.rating.toFixed(1);
+    document.getElementById('m-desc').textContent = '"' + m.desc + '"';
+    document.getElementById('m-year-2').textContent = m.year;
+    document.getElementById('m-director-2').textContent = m.director;
+    document.getElementById('m-rating-2').innerHTML = m.rating.toFixed(1) + ' <span style="font-size:14px;color:var(--ink-mute);">/ 10</span>';
+
+    document.getElementById('modal-poster').className = 'modal-poster poster ' + cls;
+    document.getElementById('modal-poster').innerHTML = `
+      <div class="deco ${deco}"></div>
+      <div class="art">
+        <div class="corner">
+          <span>№ ${String(idx + 1).padStart(2,'0')}</span>
+          <span>${m.year}</span>
+        </div>
+        <div><div class="ttl">${m.title}</div></div>
+        <div class="footnote">
+          <span>${m.genre.toUpperCase()}</span>
+          <span class="rating">★ ${m.rating.toFixed(1)}</span>
+        </div>
+      </div>`;
+
+    const mod = document.getElementById('modal');
+    mod.classList.add('open');
+    requestAnimationFrame(() => mod.classList.add('in'));
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal(e) {
+    if (e && e.target !== e.currentTarget && e.type === 'click') return;
+    const mod = document.getElementById('modal');
+    mod.classList.remove('in');
+    setTimeout(() => { mod.classList.remove('open'); document.body.style.overflow = ''; }, 350);
+  }
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { closeModal(); closeAuth(); }
+  });
+
+  function addFavourite(btn) {
+    btn.textContent = '✓  Added';
+    btn.style.background = 'var(--ink)';
+    btn.style.color = 'var(--bg)';
+    setTimeout(() => {
+      btn.textContent = '+ Add to list';
+      btn.style.background = ''; btn.style.color = '';
+    }, 1600);
+  }
+
+  // ─────────────────────────────────────────────
+  // auth modal (visual only)
+  // ─────────────────────────────────────────────
+  function openAuth() {
+    const m = document.getElementById('auth');
+    m.classList.add('open');
+    requestAnimationFrame(() => m.classList.add('in'));
+    document.body.style.overflow = 'hidden';
+  }
+  function closeAuth(e) {
+    if (e && e.target !== e.currentTarget && e.type === 'click') return;
+    const m = document.getElementById('auth');
+    m.classList.remove('in');
+    setTimeout(() => { m.classList.remove('open'); document.body.style.overflow = ''; }, 350);
+  }
+  document.querySelectorAll('.auth-tab').forEach(t => {
+    t.addEventListener('click', () => {
+      document.querySelectorAll('.auth-tab').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      document.getElementById('auth-submit').textContent =
+        t.dataset.tab === 'login' ? 'Sign in' : 'Create account';
+    });
+  });
+  function submitAuth() {
+    const u = document.getElementById('auth-user').value.trim();
+    const p = document.getElementById('auth-pass').value;
+    const btn = document.getElementById('auth-submit');
+    if (!u || !p) { btn.textContent = 'Username & password required'; return; }
+    btn.textContent = 'Authenticating…';
+    setTimeout(() => {
+      const ok = (u === 'admin' && p === 'admin123');
+      btn.textContent = ok ? '✓  Welcome, ' + u : 'Invalid credentials';
+      btn.style.background = ok ? 'var(--ink)' : 'var(--red-2)';
+      btn.style.color = ok ? 'var(--bg)' : 'var(--ink)';
+      if (ok) setTimeout(closeAuth, 1200);
+    }, 700);
+  }
+
+  // ─────────────────────────────────────────────
+  // boot
+  // ─────────────────────────────────────────────
+  renderGrid(MOVIES);
+</script>
+
+</body>
+</html>
