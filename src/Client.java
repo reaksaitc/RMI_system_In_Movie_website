@@ -18,6 +18,25 @@ public class Client {
         return Base64.getEncoder().encodeToString(cipher.doFinal(text.getBytes()));
     }
 
+    // Clear screen (Windows & Unix)
+    private static void clearScreen() {
+        try {
+            String os = System.getProperty("os.name").toLowerCase();
+            ProcessBuilder pb = os.contains("win")
+                ? new ProcessBuilder("cmd", "/c", "cls")
+                : new ProcessBuilder("clear");
+            pb.inheritIO().start().waitFor();
+        } catch (Exception e) {
+            for (int i = 0; i < 40; i++) System.out.println();
+        }
+    }
+
+    // Pause so user can read result before screen clears
+    private static void pause(Scanner scanner) {
+        System.out.print("\nPress Enter to continue...");
+        scanner.nextLine();
+    }
+
     public static void main(String[] args) {
         try {
             // Connect to server
@@ -28,76 +47,127 @@ public class Client {
             Scanner scanner = new Scanner(System.in);
             boolean isLoggedIn = false;
             String currentUser = "";
-
-            System.out.println(" Welcome to Movie RMI System!");
-            System.out.println("================================");
+            String lastResult = "(no previous action yet)";
 
             while (true) {
+                clearScreen();
+
                 if (!isLoggedIn) {
+                    System.out.println(" Welcome to Movie RMI System!");
+                    System.out.println("================================");
                     System.out.println("\n1. Register");
                     System.out.println("2. Login");
-                    System.out.println("3. Exit");
+                    System.out.println("3. Back");
+                    System.out.println("4. Exit");
                     System.out.print("Choose: ");
                     int choice = scanner.nextInt();
                     scanner.nextLine();
 
                     if (choice == 1) {
+                        clearScreen();
+                        System.out.println(" Register");
+                        System.out.println("================================");
                         System.out.print("Enter username: ");
                         String username = scanner.nextLine();
                         System.out.print("Enter password: ");
                         String password = scanner.nextLine();
                         String result = authService.register(username, password);
+                        lastResult = "[Register] " + result;
                         System.out.println(result);
+                        pause(scanner);
 
                     } else if (choice == 2) {
+                        clearScreen();
+                        System.out.println(" Login");
+                        System.out.println("================================");
                         System.out.print("Enter username: ");
                         String username = scanner.nextLine();
                         System.out.print("Enter password: ");
                         String password = scanner.nextLine();
                         String encryptedPassword = encrypt(password);
                         String result = authService.login(username, encryptedPassword);
+                        lastResult = "[Login] " + result;
                         System.out.println(result);
                         if (result.contains("Login successful")) {
                             isLoggedIn = true;
                             currentUser = username;
                         }
+                        pause(scanner);
 
                     } else if (choice == 3) {
+                        clearScreen();
+                        System.out.println(" Last Result");
+                        System.out.println("================================");
+                        System.out.println(lastResult);
+                        pause(scanner);
+
+                    } else if (choice == 4) {
+                        clearScreen();
                         System.out.println("Goodbye!");
                         break;
                     }
 
                 } else {
-                    System.out.println("\n Welcome " + currentUser + "!");
-                    System.out.println("1. Get All Movies");
+                    System.out.println(" Welcome " + currentUser + "!");
+                    System.out.println("================================");
+                    System.out.println("\n1. Get All Movies");
                     System.out.println("2. Search Movie");
                     System.out.println("3. Get Movie Details");
-                    System.out.println("4. Logout");
+                    System.out.println("4. Back");
+                    System.out.println("5. Logout");
                     System.out.print("Choose: ");
                     int choice = scanner.nextInt();
                     scanner.nextLine();
 
                     if (choice == 1) {
+                        clearScreen();
+                        System.out.println(" All Movies");
+                        System.out.println("================================");
                         List<String> movies = movieService.getAllMovies();
-                        System.out.println("\nAll Movies:");
+                        StringBuilder sb = new StringBuilder();
                         for (String movie : movies) {
-                            System.out.println("  - " + movie);
+                            sb.append("  - ").append(movie).append("\n");
                         }
+                        lastResult = "[All Movies]\n" + sb.toString();
+                        System.out.print(sb);
+                        pause(scanner);
 
                     } else if (choice == 2) {
+                        clearScreen();
+                        System.out.println(" Search Movie");
+                        System.out.println("================================");
                         System.out.print("Enter movie title: ");
                         String title = scanner.nextLine();
-                        System.out.println(movieService.searchMovie(title));
+                        String result = movieService.searchMovie(title);
+                        lastResult = "[Search: " + title + "] " + result;
+                        System.out.println(result);
+                        pause(scanner);
 
                     } else if (choice == 3) {
+                        clearScreen();
+                        System.out.println(" Movie Details");
+                        System.out.println("================================");
                         System.out.print("Enter movie title: ");
                         String title = scanner.nextLine();
-                        System.out.println(movieService.getMovieDetails(title));
+                        String result = movieService.getMovieDetails(title);
+                        lastResult = "[Details: " + title + "]\n" + result;
+                        System.out.println(result);
+                        pause(scanner);
 
                     } else if (choice == 4) {
+                        clearScreen();
+                        System.out.println(" Last Result");
+                        System.out.println("================================");
+                        System.out.println(lastResult);
+                        pause(scanner);
+
+                    } else if (choice == 5) {
                         isLoggedIn = false;
                         currentUser = "";
+                        lastResult = "(no previous action yet)";
+                        clearScreen();
                         System.out.println("Logged out successfully!");
+                        pause(scanner);
                     }
                 }
             }
