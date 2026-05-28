@@ -136,6 +136,13 @@ The communication in this system is **entirely driven by the Client**. Every use
 ```
 
 This design honestly reflects how RMI works — the programmer sees the distributed calls from the Client's perspective, while the Server remains passive and lets Java handle the networking.
+Client.java calls authService.register()
+    → Stub serializes the call
+        → travels over TCP :1099
+            → Skeleton unpacks it
+                → AuthServiceImpl.register() executes
+                    → result marshals back
+                        → Stub returns it to Client.java
 
 ---
 
