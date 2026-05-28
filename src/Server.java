@@ -6,7 +6,7 @@ public class Server {
         try {
             // Create services
             AuthServiceImpl authService = new AuthServiceImpl();
-            MovieServiceImpl movieService = new MovieServiceImpl();
+            MovieServiceImpl movieService = new MovieServiceImpl(authService); // ← pass authService
 
             // Create RMI registry on port 1099
             Registry registry = LocateRegistry.createRegistry(1099);
